@@ -1,0 +1,146 @@
+{% extends 'core/base.html' %}
+{% load lang_tags %}
+
+{% block title %}Search Results{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <h2 class="mb-4">
+            {% if query %}
+                {% get_translation "Search Results for" LANGUAGE_CODE %} "{{ query }}"
+            {% else %}
+                {% get_translation "Search" LANGUAGE_CODE %}
+            {% endif %}
+        </h2>
+        
+        {% if query %}
+            {% if results %}
+                <div class="row g-3">
+                    {% for user in results %}
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            {% if user.user_type == 'PLAYER' and user.player_profile.profile_picture %}
+                                                <img src="{{ user.player_profile.profile_picture.url }}" class="rounded-circle" width="50" height="50" alt="Profile">
+                                            {% elif user.user_type == 'TEAM' and user.team_profile.logo %}
+                                                <img src="{{ user.team_profile.logo.url }}" class="rounded-circle" width="50" height="50" alt="Logo">
+                                            {% elif user.user_type == 'AGENT' and user.agent_profile.profile_picture %}
+                                                <img src="{{ user.agent_profile.profile_picture.url }}" class="rounded-circle" width="50" height="50" alt="Profile">
+                                            {% else %}
+                                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                    <i class="bi bi-person text-white"></i>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-1">{{ user.get_full_name|default:user.username }}</h6>
+                                            <small class="text-muted">{{ user.get_user_type_display }}</small>
+                                            {% if user.user_type == 'PLAYER' and user.player_profile %}
+                                                <div class="small text-muted">
+                                                    {% if user.player_profile.position %}
+                                                        {{ user.player_profile.get_position_display }}
+                                                    {% endif %}
+                                                    {% if user.player_profile.location %}
+                                                        • {{ user.player_profile.location }}
+                                                    {% endif %}
+                                                </div>
+                                            {% elif user.user_type == 'TEAM' and user.team_profile %}
+                                                <div class="small text-muted">
+                                                    {{ user.team_profile.location }}
+                                                    {% if user.team_profile.league %}
+                                                        • {{ user.team_profile.get_league_display }}
+                                                    {% endif %}
+                                                </div>
+                                            {% elif user.user_type == 'AGENT' and user.agent_profile %}
+                                                <div class="small text-muted">
+                                                    {{ user.agent_profile.location }}
+                                                    {% if user.agent_profile.agency_name %}
+                                                        • {{ user.agent_profile.agency_name }}
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-shrink-0">
+                                            {% if user.user_type == 'PLAYER' and user.player_profile %}
+                                                <a href="{% url 'profiles:player_detail' user.player_profile.pk %}" class="btn btn-outline-primary btn-sm">View Profile</a>
+                                            {% elif user.user_type == 'TEAM' and user.team_profile %}
+                                                <a href="{% url 'profiles:team_detail' user.team_profile.pk %}" class="btn btn-outline-primary btn-sm">View Team</a>
+                                            {% elif user.user_type == 'AGENT' and user.agent_profile %}
+                                                <a href="{% url 'profiles:agent_detail' user.agent_profile.pk %}" class="btn btn-outline-primary btn-sm">View Profile</a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    No results found for "{{ query }}". Try different keywords or check your spelling.
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-secondary">
+                <i class="bi bi-search me-2"></i>
+                Enter a search term to find players, teams, and agents.
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Search Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Search by name, location, or team
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Use position names (e.g., "Fly Half", "Prop")
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Try league names (e.g., "Premiership", "Championship")
+                    </li>
+                    <li class="mb-0">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Search by availability status
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        {% if user.is_authenticated %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'opportunities:list' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-briefcase me-1"></i> Browse Opportunities
+                        </a>
+                        <a href="{% url 'connections:list' %}" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-people me-1"></i> My Network
+                        </a>
+                        {% if user.user_type == 'TEAM' %}
+                            <a href="{% url 'opportunities:create' %}" class="btn btn-outline-warning btn-sm">
+                                <i class="bi bi-plus-circle me-1"></i> Post Opportunity
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

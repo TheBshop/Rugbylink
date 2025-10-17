@@ -1,0 +1,467 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load lang_tags %}
+
+{% block title %}{{ player.user.get_full_name }} - Player Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header Section -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            {% if player.profile_picture %}
+                                <img src="{{ player.profile_picture.url }}" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;" alt="Profile Picture">
+                            {% else %}
+                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center mb-3 mx-auto" style="width: 150px; height: 150px;">
+                                    <i class="bi bi-person text-white" style="font-size: 4rem;"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Verification Badge -->
+                            {% if player.is_verified %}
+                                <div class="text-success mb-2">
+                                    <i class="bi bi-check-circle-fill"></i> Verified
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Status Badge -->
+                            <span class="badge 
+                                {% if player.availability_status == 'AVAILABLE' %}bg-success
+                                {% elif player.availability_status == 'INJURED' %}bg-warning
+                                {% elif player.availability_status == 'UNAVAILABLE' %}bg-danger
+                                {% else %}bg-secondary{% endif %}">
+                                {{ player.get_availability_status_display }}
+                            </span>
+                        </div>
+                        
+                        <div class="col-md-9">
+                            <h1 class="h2 mb-1">{{ player.user.get_full_name|default:player.user.username }}</h1>
+                            <p class="text-muted mb-2">{{ player.get_position_display }}</p>
+                            
+                            <!-- Basic Info -->
+                            <div class="row mb-3">
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-geo-alt text-muted me-2"></i>
+                                        <span>{{ player.location }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-calendar text-muted me-2"></i>
+                                        <span>Age {{ player.age }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-rulers text-muted me-2"></i>
+                                        <span>{{ player.height }}cm</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-speedometer text-muted me-2"></i>
+                                        <span>{{ player.weight }}kg</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Current Team -->
+                            {% if player.current_team %}
+                                <div class="mb-3">
+                                    <strong>Current Team:</strong> {{ player.current_team }}
+                                    {% if player.current_league %}
+                                        <span class="text-muted">({{ player.current_league }})</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Bio -->
+                            {% if player.bio %}
+                                <div class="mb-3">
+                                    <h6>About</h6>
+                                    <p class="text-muted">{{ player.bio }}</p>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Action Buttons -->
+                            <div class="d-flex gap-2">
+                                {% if user.is_authenticated and user != player.user %}
+                                    <button class="btn btn-success">
+                                        <i class="bi bi-person-plus"></i> Connect
+                                    </button>
+                                    <button class="btn btn-outline-primary">
+                                        <i class="bi bi-envelope"></i> Message
+                                    </button>
+                                    <button class="btn btn-outline-secondary">
+                                        <i class="bi bi-share"></i> Share
+                                    </button>
+                                {% endif %}
+                                
+                                {% if user == player.user %}
+                                    <a href="{% url 'profiles:player_update' pk=player.pk %}" class="btn btn-primary">
+                                        <i class="bi bi-pencil"></i> Edit Profile
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Stats -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Quick Stats</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="h5 mb-0">{{ player.caps }}</div>
+                            <small class="text-muted">Caps</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="h5 mb-0">{{ player.tries }}</div>
+                            <small class="text-muted">Tries</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="h5 mb-0">{{ player.total_points }}</div>
+                            <small class="text-muted">Points</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detailed Stats -->
+            {% if player.detailed_stats %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Player Ratings</h6>
+                    </div>
+                    <div class="card-body">
+                        {% with stats=player.detailed_stats %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Speed</span>
+                                    <span>{{ stats.speed_rating }}/100</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar" style="width: {{ stats.speed_rating }}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Strength</span>
+                                    <span>{{ stats.strength_rating }}/100</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar" style="width: {{ stats.strength_rating }}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Agility</span>
+                                    <span>{{ stats.agility_rating }}/100</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar" style="width: {{ stats.agility_rating }}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Endurance</span>
+                                    <span>{{ stats.endurance_rating }}/100</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar" style="width: {{ stats.endurance_rating }}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <div class="h4 text-success">{{ stats.overall_rating }}/100</div>
+                                <small class="text-muted">Overall Rating</small>
+                            </div>
+                        {% endwith %}
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Contact Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Contact Information</h6>
+                </div>
+                <div class="card-body">
+                    {% if player.phone %}
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-telephone text-muted me-2"></i>
+                            <span>{{ player.phone }}</span>
+                        </div>
+                    {% endif %}
+                    
+                    {% if player.social_media %}
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-link-45deg text-muted me-2"></i>
+                            <span>{{ player.social_media }}</span>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-envelope text-muted me-2"></i>
+                        <span>{{ player.user.email }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content Tabs -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Navigation Tabs -->
+            <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="experience-tab" data-bs-toggle="tab" data-bs-target="#experience" type="button" role="tab">
+                        <i class="bi bi-briefcase"></i> Experience
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button" role="tab">
+                        <i class="bi bi-bar-chart"></i> Statistics
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="achievements-tab" data-bs-toggle="tab" data-bs-target="#achievements" type="button" role="tab">
+                        <i class="bi bi-trophy"></i> Achievements
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button" role="tab">
+                        <i class="bi bi-play-circle"></i> Media
+                    </button>
+                </li>
+            </ul>
+            
+            <!-- Tab Content -->
+            <div class="tab-content" id="profileTabsContent">
+                <!-- Experience Tab -->
+                <div class="tab-pane fade show active" id="experience" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Playing History</h5>
+                            
+                            {% if player.career_history.exists %}
+                                <div class="timeline">
+                                    {% for history in player.career_history %}
+                                        <div class="timeline-item mb-4">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0">
+                                                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                        <i class="bi bi-building"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1 ms-3">
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <h6 class="mb-1">{{ history.team_name }}</h6>
+                                                            <p class="text-muted mb-1">{{ history.get_team_type_display }} • {{ history.get_contract_type_display }}</p>
+                                                            {% if history.position_played %}
+                                                                <small class="text-muted">Position: {{ history.get_position_played_display }}</small>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <span class="badge bg-secondary">{{ history.start_date.year }}</span>
+                                                            {% if not history.is_current and history.end_date %}
+                                                                <span class="text-muted">- {{ history.end_date.year }}</span>
+                                                            {% elif history.is_current %}
+                                                                <span class="badge bg-success">Current</span>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {% if history.appearances > 0 %}
+                                                        <div class="mt-2">
+                                                            <small class="text-muted">
+                                                                {{ history.appearances }} appearances
+                                                                {% if history.tries_scored > 0 %}• {{ history.tries_scored }} tries{% endif %}
+                                                                {% if history.points_scored > 0 %}• {{ history.points_scored }} points{% endif %}
+                                                            </small>
+                                                        </div>
+                                                    {% endif %}
+                                                    
+                                                    {% if history.notes %}
+                                                        <p class="mt-2 mb-0 small text-muted">{{ history.notes }}</p>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center text-muted py-4">
+                                    <i class="bi bi-briefcase display-4"></i>
+                                    <p class="mt-2">No playing history available</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Statistics Tab -->
+                <div class="tab-pane fade" id="stats" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Career Statistics</h5>
+                            
+                            {% if player.detailed_stats %}
+                                {% with stats=player.detailed_stats %}
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Career Totals</h6>
+                                            <div class="list-group list-group-flush">
+                                                <div class="list-group-item d-flex justify-content-between">
+                                                    <span>Total Matches</span>
+                                                    <strong>{{ stats.total_matches }}</strong>
+                                                </div>
+                                                <div class="list-group-item d-flex justify-content-between">
+                                                    <span>Total Minutes</span>
+                                                    <strong>{{ stats.total_minutes }}</strong>
+                                                </div>
+                                                <div class="list-group-item d-flex justify-content-between">
+                                                    <span>Total Tries</span>
+                                                    <strong>{{ stats.total_tries }}</strong>
+                                                </div>
+                                                <div class="list-group-item d-flex justify-content-between">
+                                                    <span>Total Assists</span>
+                                                    <strong>{{ stats.total_assists }}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <h6>Performance Stats</h6>
+                                            <div class="list-group list-group-flush">
+                                                <div class="list-group-item d-flex justify-content-between">
+                                                    <span>Total Tackles</span>
+                                                    <strong>{{ stats.total_tackles }}</strong>
+                                                </div>
+                                                <div class="list-group-item d-flex justify-content-between">
+                                                    <span>Total Turnovers</span>
+                                                    <strong>{{ stats.total_turnovers }}</strong>
+                                                </div>
+                                                <div class="list-group-item d-flex justify-content-between">
+                                                    <span>Passing Accuracy</span>
+                                                    <strong>{{ stats.passing_accuracy }}%</strong>
+                                                </div>
+                                                <div class="list-group-item d-flex justify-content-between">
+                                                    <span>Kicking Accuracy</span>
+                                                    <strong>{{ stats.kicking_accuracy }}%</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endwith %}
+                            {% else %}
+                                <div class="text-center text-muted py-4">
+                                    <i class="bi bi-bar-chart display-4"></i>
+                                    <p class="mt-2">No detailed statistics available</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Achievements Tab -->
+                <div class="tab-pane fade" id="achievements" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Awards & Achievements</h5>
+                            
+                            {% if player.awards %}
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="border-start border-success border-3 ps-3">
+                                            <p class="mb-0">{{ player.awards|linebreaks }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="text-center text-muted py-4">
+                                    <i class="bi bi-trophy display-4"></i>
+                                    <p class="mt-2">No awards or achievements listed</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Media Tab -->
+                <div class="tab-pane fade" id="media" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Videos & Highlights</h5>
+                            
+                            {% if player.highlights_url or player.video_urls %}
+                                {% if player.highlights_url %}
+                                    <div class="mb-4">
+                                        <h6>Highlight Reel</h6>
+                                        <div class="ratio ratio-16x9">
+                                            <iframe src="{{ player.highlights_url }}" title="Highlight Reel" allowfullscreen></iframe>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if player.video_urls %}
+                                    <div>
+                                        <h6>Additional Videos</h6>
+                                        <div class="row">
+                                            {% for video_url in player.video_urls|linebreaksbr|slice:":3" %}
+                                                <div class="col-md-4 mb-3">
+                                                    <div class="ratio ratio-16x9">
+                                                        <iframe src="{{ video_url }}" title="Player Video" allowfullscreen></iframe>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="text-center text-muted py-4">
+                                    <i class="bi bi-play-circle display-4"></i>
+                                    <p class="mt-2">No videos or highlights available</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 40px;
+    bottom: -20px;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.progress {
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    background-color: #28a745;
+}
+</style>
+{% endblock %}

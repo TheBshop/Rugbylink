@@ -1,0 +1,88 @@
+# French translations for RugbyLink
+# Copyright (C) 2024 RugbyLink
+# This file is distributed under the same license as the RugbyLink project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: RugbyLink 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-10-16 11:36+0000\n"
+"PO-Revision-Date: 2024-10-16 11:36+0000\n"
+"Last-Translator: RugbyLink Team\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Home"
+msgstr "Accueil"
+
+msgid "Opportunities"
+msgstr "Opportunités"
+
+msgid "Network"
+msgstr "Réseau"
+
+msgid "Messages"
+msgstr "Messages"
+
+msgid "Login"
+msgstr "Connexion"
+
+msgid "Sign Up"
+msgstr "S'inscrire"
+
+msgid "Welcome to RugbyLink"
+msgstr "Bienvenue sur RugbyLink"
+
+msgid "Connect with the Rugby Community"
+msgstr "Connectez-vous avec la Communauté du Rugby"
+
+msgid "Join as Player"
+msgstr "Rejoindre en tant que Joueur"
+
+msgid "Join as Team"
+msgstr "Rejoindre en tant qu'Équipe"
+
+msgid "Join as Agent"
+msgstr "Rejoindre en tant qu'Agent"
+
+msgid "Player Profiles"
+msgstr "Profils de Joueurs"
+
+msgid "Contract Opportunities"
+msgstr "Opportunités de Contrat"
+
+msgid "Professional Network"
+msgstr "Réseau Professionnel"
+
+msgid "Ready to Join the Rugby Community?"
+msgstr "Prêt à Rejoindre la Communauté du Rugby?"
+
+msgid "Create your free account today and start building your rugby career network."
+msgstr "Créez votre compte gratuit aujourd'hui et commencez à construire votre réseau professionnel de rugby."
+
+msgid "Get Started Now"
+msgstr "Commencer Maintenant"
+
+msgid "Search players, teams..."
+msgstr "Rechercher des joueurs, équipes..."
+
+msgid "Search"
+msgstr "Rechercher"
+
+msgid "Search Results"
+msgstr "Résultats de Recherche"
+
+msgid "Search Results for"
+msgstr "Résultats de Recherche pour"
+
+msgid "No results found for"
+msgstr "Aucun résultat trouvé pour"
+
+msgid "Try different keywords or check your spelling."
+msgstr "Essayez des mots-clés différents ou vérifiez l'orthographe."
+
+msgid "Enter a search term to find players, teams, and agents."
+msgstr "Entrez un terme de recherche pour trouver des joueurs, équipes et agents."

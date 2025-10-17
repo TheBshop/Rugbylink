@@ -1,0 +1,88 @@
+# Italian translations for RugbyLink
+# Copyright (C) 2024 RugbyLink
+# This file is distributed under the same license as the RugbyLink project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: RugbyLink 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-10-16 11:36+0000\n"
+"PO-Revision-Date: 2024-10-16 11:36+0000\n"
+"Last-Translator: RugbyLink Team\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Home"
+msgstr "Home"
+
+msgid "Opportunities"
+msgstr "Opportunità"
+
+msgid "Network"
+msgstr "Rete"
+
+msgid "Messages"
+msgstr "Messaggi"
+
+msgid "Login"
+msgstr "Accedi"
+
+msgid "Sign Up"
+msgstr "Registrati"
+
+msgid "Welcome to RugbyLink"
+msgstr "Benvenuto su RugbyLink"
+
+msgid "Connect with the Rugby Community"
+msgstr "Connettiti con la Comunità del Rugby"
+
+msgid "Join as Player"
+msgstr "Unisciti come Giocatore"
+
+msgid "Join as Team"
+msgstr "Unisciti come Squadra"
+
+msgid "Join as Agent"
+msgstr "Unisciti come Agente"
+
+msgid "Player Profiles"
+msgstr "Profili dei Giocatori"
+
+msgid "Contract Opportunities"
+msgstr "Opportunità di Contratto"
+
+msgid "Professional Network"
+msgstr "Rete Professionale"
+
+msgid "Ready to Join the Rugby Community?"
+msgstr "Pronto a Unirti alla Comunità del Rugby?"
+
+msgid "Create your free account today and start building your rugby career network."
+msgstr "Crea il tuo account gratuito oggi e inizia a costruire la tua rete professionale di rugby."
+
+msgid "Get Started Now"
+msgstr "Inizia Ora"
+
+msgid "Search players, teams..."
+msgstr "Cerca giocatori, squadre..."
+
+msgid "Search"
+msgstr "Cerca"
+
+msgid "Search Results"
+msgstr "Risultati di Ricerca"
+
+msgid "Search Results for"
+msgstr "Risultati di Ricerca per"
+
+msgid "No results found for"
+msgstr "Nessun risultato trovato per"
+
+msgid "Try different keywords or check your spelling."
+msgstr "Prova parole chiave diverse o controlla l'ortografia."
+
+msgid "Enter a search term to find players, teams, and agents."
+msgstr "Inserisci un termine di ricerca per trovare giocatori, squadre e agenti."

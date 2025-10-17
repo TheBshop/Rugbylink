@@ -1,0 +1,534 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load lang_tags %}
+
+{% block title %}My Network{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <h1 class="h2">My Network</h1>
+            <p class="text-muted">Manage your professional connections and endorsements</p>
+        </div>
+        <div class="col-lg-4 text-end">
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#inviteModal">
+                <i class="bi bi-person-plus"></i> Invite Connections
+            </button>
+        </div>
+    </div>
+
+    <!-- Network Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="h3 text-primary">{{ connections_count }}</div>
+                    <small class="text-muted">Connections</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="h3 text-success">{{ endorsements_received }}</div>
+                    <small class="text-muted">Endorsements</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="h3 text-warning">{{ recommendations_received }}</div>
+                    <small class="text-muted">Recommendations</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="h3 text-info">{{ pending_requests }}</div>
+                    <small class="text-muted">Pending Requests</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs" id="networkTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="connections-tab" data-bs-toggle="tab" data-bs-target="#connections" type="button" role="tab">
+                <i class="bi bi-people"></i> Connections
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button" role="tab">
+                <i class="bi bi-person-check"></i> Requests
+                {% if pending_requests > 0 %}
+                    <span class="badge bg-danger ms-1">{{ pending_requests }}</span>
+                {% endif %}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="endorsements-tab" data-bs-toggle="tab" data-bs-target="#endorsements" type="button" role="tab">
+                <i class="bi bi-award"></i> Endorsements
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="recommendations-tab" data-bs-toggle="tab" data-bs-target="#recommendations" type="button" role="tab">
+                <i class="bi bi-star"></i> Recommendations
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="networkTabsContent">
+        <!-- Connections Tab -->
+        <div class="tab-pane fade show active" id="connections" role="tabpanel">
+            <div class="card mt-3">
+                <div class="card-body">
+                    <!-- Search and Filter -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="connectionSearch" placeholder="Search connections...">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="connectionFilter">
+                                <option value="">All Connections</option>
+                                <option value="player">Players</option>
+                                <option value="team">Teams</option>
+                                <option value="agent">Agents</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="connectionSort">
+                                <option value="recent">Recently Connected</option>
+                                <option value="name">Name A-Z</option>
+                                <option value="type">User Type</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Connections Grid -->
+                    <div class="row g-3" id="connectionsGrid">
+                        {% for connection in connections %}
+                            <div class="col-lg-4 col-md-6 connection-item" data-user-type="{{ connection.following.user_type }}" data-name="{{ connection.following.get_full_name|default:connection.following.username }}">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <!-- Profile Picture -->
+                                        <div class="mb-3">
+                                            {% if connection.following.user_type == 'player' and connection.following.player_profile.profile_picture %}
+                                                <img src="{{ connection.following.player_profile.profile_picture.url }}" 
+                                                     class="img-fluid rounded-circle" style="width: 80px; height: 80px; object-fit: cover;" alt="Profile">
+                                            {% elif connection.following.user_type == 'team' and connection.following.team_profile.logo %}
+                                                <img src="{{ connection.following.team_profile.logo.url }}" 
+                                                     class="img-fluid rounded-circle" style="width: 80px; height: 80px; object-fit: cover;" alt="Logo">
+                                            {% elif connection.following.user_type == 'agent' and connection.following.agent_profile.profile_picture %}
+                                                <img src="{{ connection.following.agent_profile.profile_picture.url }}" 
+                                                     class="img-fluid rounded-circle" style="width: 80px; height: 80px; object-fit: cover;" alt="Profile">
+                                            {% else %}
+                                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 80px; height: 80px;">
+                                                    <i class="bi bi-person text-white" style="font-size: 2rem;"></i>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- User Info -->
+                                        <h6 class="card-title mb-1">
+                                            <a href="{% if connection.following.user_type == 'player' %}{% url 'profiles:player_detail' connection.following.player_profile.pk %}{% elif connection.following.user_type == 'team' %}{% url 'profiles:team_detail' connection.following.team_profile.pk %}{% elif connection.following.user_type == 'agent' %}{% url 'profiles:agent_detail' connection.following.agent_profile.pk %}{% endif %}" 
+                                               class="text-decoration-none">
+                                                {{ connection.following.get_full_name|default:connection.following.username }}
+                                            </a>
+                                        </h6>
+                                        
+                                        <p class="text-muted small mb-2">
+                                            {% if connection.following.user_type == 'player' and connection.following.player_profile.position %}
+                                                {{ connection.following.player_profile.get_position_display }}
+                                            {% elif connection.following.user_type == 'team' and connection.following.team_profile.team_name %}
+                                                {{ connection.following.team_profile.team_name }}
+                                            {% elif connection.following.user_type == 'agent' and connection.following.agent_profile.agency_name %}
+                                                {{ connection.following.agent_profile.agency_name }}
+                                            {% else %}
+                                                {{ connection.following.get_user_type_display }}
+                                            {% endif %}
+                                        </p>
+
+                                        <!-- Connection Date -->
+                                        <p class="text-muted small mb-3">
+                                            Connected {{ connection.created_at|timesince }} ago
+                                        </p>
+
+                                        <!-- Action Buttons -->
+                                        <div class="d-flex gap-2 justify-content-center">
+                                            <button class="btn btn-outline-primary btn-sm" onclick="messageUser('{{ connection.following.username }}')">
+                                                <i class="bi bi-envelope"></i>
+                                            </button>
+                                            {% if connection.following.user_type == 'player' %}
+                                                <button class="btn btn-outline-success btn-sm" onclick="endorseUser('{{ connection.following.username }}')">
+                                                    <i class="bi bi-award"></i>
+                                                </button>
+                                            {% endif %}
+                                            <button class="btn btn-outline-secondary btn-sm" onclick="shareProfile('{{ connection.following.username }}')">
+                                                <i class="bi bi-share"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="col-12">
+                                <div class="text-center py-5">
+                                    <i class="bi bi-people display-1 text-muted"></i>
+                                    <h3 class="mt-3">No Connections Yet</h3>
+                                    <p class="text-muted">Start building your network by connecting with other rugby professionals.</p>
+                                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#inviteModal">
+                                        <i class="bi bi-person-plus"></i> Find Connections
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Requests Tab -->
+        <div class="tab-pane fade" id="requests" role="tabpanel">
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Connection Requests</h5>
+                    
+                    {% if connection_requests %}
+                        {% for request in connection_requests %}
+                            <div class="d-flex align-items-center justify-content-between border-bottom py-3">
+                                <div class="d-flex align-items-center">
+                                    <!-- Profile Picture -->
+                                    <div class="me-3">
+                                        {% if request.requester.user_type == 'player' and request.requester.player_profile.profile_picture %}
+                                            <img src="{{ request.requester.player_profile.profile_picture.url }}" 
+                                                 class="img-fluid rounded-circle" style="width: 50px; height: 50px; object-fit: cover;" alt="Profile">
+                                        {% elif request.requester.user_type == 'team' and request.requester.team_profile.logo %}
+                                            <img src="{{ request.requester.team_profile.logo.url }}" 
+                                                 class="img-fluid rounded-circle" style="width: 50px; height: 50px; object-fit: cover;" alt="Logo">
+                                        {% else %}
+                                            <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <i class="bi bi-person text-white"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Request Info -->
+                                    <div>
+                                        <h6 class="mb-1">
+                                            <a href="{% if request.requester.user_type == 'player' %}{% url 'profiles:player_detail' request.requester.player_profile.pk %}{% elif request.requester.user_type == 'team' %}{% url 'profiles:team_detail' request.requester.team_profile.pk %}{% elif request.requester.user_type == 'agent' %}{% url 'profiles:agent_detail' request.requester.agent_profile.pk %}{% endif %}" 
+                                               class="text-decoration-none">
+                                                {{ request.requester.get_full_name|default:request.requester.username }}
+                                            </a>
+                                        </h6>
+                                        <p class="text-muted small mb-1">{{ request.requester.get_user_type_display }}</p>
+                                        {% if request.message %}
+                                            <p class="text-muted small mb-1">"{{ request.message }}"</p>
+                                        {% endif %}
+                                        <p class="text-muted small mb-0">{{ request.created_at|timesince }} ago</p>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-2">
+                                    <form method="post" action="{% url 'connections:accept_request' request.pk %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="bi bi-check"></i> Accept
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{% url 'connections:reject_request' request.pk %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-x"></i> Decline
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox display-1 text-muted"></i>
+                            <h3 class="mt-3">No Pending Requests</h3>
+                            <p class="text-muted">You don't have any pending connection requests.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Endorsements Tab -->
+        <div class="tab-pane fade" id="endorsements" role="tabpanel">
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Skill Endorsements</h5>
+                    
+                    {% if user.user_type == 'player' %}
+                        <!-- My Skills Section -->
+                        <div class="mb-4">
+                            <h6>My Skills</h6>
+                            <div class="row g-2">
+                                {% for player_skill in user.player_profile.skills.all %}
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <h6 class="mb-1">{{ player_skill.skill.name }}</h6>
+                                                        <span class="badge bg-secondary">{{ player_skill.get_proficiency_level_display }}</span>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        <div class="h5 mb-0">{{ player_skill.endorsements.count }}</div>
+                                                        <small class="text-muted">endorsements</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <div class="col-12">
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle me-2"></i>
+                                            You haven't added any skills to your profile yet. 
+                                            <a href="{% url 'profiles:player_update' user.player_profile.pk %}">Add skills</a> to receive endorsements.
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Recent Endorsements -->
+                        <h6>Recent Endorsements</h6>
+                        {% if recent_endorsements %}
+                            {% for endorsement in recent_endorsements %}
+                                <div class="d-flex align-items-center border-bottom py-3">
+                                    <div class="me-3">
+                                        {% if endorsement.endorser.user_type == 'player' and endorsement.endorser.player_profile.profile_picture %}
+                                            <img src="{{ endorsement.endorser.player_profile.profile_picture.url }}" 
+                                                 class="img-fluid rounded-circle" style="width: 50px; height: 50px; object-fit: cover;" alt="Profile">
+                                        {% else %}
+                                            <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <i class="bi bi-person text-white"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">
+                                            <a href="{% if endorsement.endorser.user_type == 'player' %}{% url 'profiles:player_detail' endorsement.endorser.player_profile.pk %}{% elif endorsement.endorser.user_type == 'team' %}{% url 'profiles:team_detail' endorsement.endorser.team_profile.pk %}{% elif endorsement.endorser.user_type == 'agent' %}{% url 'profiles:agent_detail' endorsement.endorser.agent_profile.pk %}{% endif %}" 
+                                               class="text-decoration-none">
+                                                {{ endorsement.endorser.get_full_name|default:endorsement.endorser.username }}
+                                            </a>
+                                            endorsed your <strong>{{ endorsement.player_skill.skill.name }}</strong>
+                                        </h6>
+                                        {% if endorsement.message %}
+                                            <p class="text-muted small mb-1">"{{ endorsement.message }}"</p>
+                                        {% endif %}
+                                        <p class="text-muted small mb-0">{{ endorsement.created_at|timesince }} ago</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-award display-1 text-muted"></i>
+                                <h3 class="mt-3">No Endorsements Yet</h3>
+                                <p class="text-muted">Endorsements will appear here when others endorse your skills.</p>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Only players can receive skill endorsements. Switch to a player account to view endorsements.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations Tab -->
+        <div class="tab-pane fade" id="recommendations" role="tabpanel">
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Recommendations</h5>
+                    
+                    {% if recommendations_received %}
+                        {% for recommendation in recommendations_received %}
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-3">
+                                            {% if recommendation.recommender.user_type == 'player' and recommendation.recommender.player_profile.profile_picture %}
+                                                <img src="{{ recommendation.recommender.player_profile.profile_picture.url }}" 
+                                                     class="img-fluid rounded-circle" style="width: 60px; height: 60px; object-fit: cover;" alt="Profile">
+                                            {% elif recommendation.recommender.user_type == 'team' and recommendation.recommender.team_profile.logo %}
+                                                <img src="{{ recommendation.recommender.team_profile.logo.url }}" 
+                                                     class="img-fluid rounded-circle" style="width: 60px; height: 60px; object-fit: cover;" alt="Logo">
+                                            {% else %}
+                                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                                    <i class="bi bi-person text-white" style="font-size: 1.5rem;"></i>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">
+                                                <a href="{% if recommendation.recommender.user_type == 'player' %}{% url 'profiles:player_detail' recommendation.recommender.player_profile.pk %}{% elif recommendation.recommender.user_type == 'team' %}{% url 'profiles:team_detail' recommendation.recommender.team_profile.pk %}{% elif recommendation.recommender.user_type == 'agent' %}{% url 'profiles:agent_detail' recommendation.recommender.agent_profile.pk %}{% endif %}" 
+                                                   class="text-decoration-none">
+                                                    {{ recommendation.recommender.get_full_name|default:recommendation.recommender.username }}
+                                                </a>
+                                                <span class="badge bg-secondary ms-2">{{ recommendation.get_relationship_display }}</span>
+                                            </h6>
+                                            <p class="text-muted small mb-2">{{ recommendation.title }}</p>
+                                            <p class="mb-2">{{ recommendation.recommendation_text }}</p>
+                                            <p class="text-muted small mb-0">{{ recommendation.created_at|date:"F d, Y" }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-star display-1 text-muted"></i>
+                            <h3 class="mt-3">No Recommendations Yet</h3>
+                            <p class="text-muted">Recommendations will appear here when others write them for you.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invite Modal -->
+<div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="inviteModalLabel">Find Connections</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'connections:search_users' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="searchQuery" class="form-label">Search for people</label>
+                        <input type="text" class="form-control" id="searchQuery" name="q" placeholder="Enter name, team, or position...">
+                    </div>
+                    <div class="mb-3">
+                        <label for="userType" class="form-label">User Type</label>
+                        <select class="form-select" id="userType" name="user_type">
+                            <option value="">All Types</option>
+                            <option value="player">Players</option>
+                            <option value="team">Teams</option>
+                            <option value="agent">Agents</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success">Search</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Connection search and filter functionality
+document.getElementById('connectionSearch').addEventListener('input', filterConnections);
+document.getElementById('connectionFilter').addEventListener('change', filterConnections);
+document.getElementById('connectionSort').addEventListener('change', sortConnections);
+
+function filterConnections() {
+    const searchTerm = document.getElementById('connectionSearch').value.toLowerCase();
+    const filterType = document.getElementById('connectionFilter').value;
+    const connections = document.querySelectorAll('.connection-item');
+    
+    connections.forEach(connection => {
+        const name = connection.dataset.name.toLowerCase();
+        const userType = connection.dataset.userType;
+        
+        const matchesSearch = name.includes(searchTerm);
+        const matchesFilter = !filterType || userType === filterType;
+        
+        if (matchesSearch && matchesFilter) {
+            connection.style.display = 'block';
+        } else {
+            connection.style.display = 'none';
+        }
+    });
+}
+
+function sortConnections() {
+    const sortBy = document.getElementById('connectionSort').value;
+    const grid = document.getElementById('connectionsGrid');
+    const connections = Array.from(grid.children);
+    
+    connections.sort((a, b) => {
+        switch(sortBy) {
+            case 'name':
+                return a.dataset.name.localeCompare(b.dataset.name);
+            case 'type':
+                return a.dataset.userType.localeCompare(b.dataset.userType);
+            default:
+                return 0;
+        }
+    });
+    
+    connections.forEach(connection => grid.appendChild(connection));
+}
+
+function messageUser(username) {
+    // Redirect to messaging with specific user
+    window.location.href = `/messaging/compose/?to=${username}`;
+}
+
+function endorseUser(username) {
+    // Redirect to endorsement page for specific user
+    window.location.href = `/connections/endorse/${username}/`;
+}
+
+function shareProfile(username) {
+    if (navigator.share) {
+        navigator.share({
+            title: `${username}'s Profile`,
+            url: `/profiles/player/${username}/`
+        });
+    } else {
+        navigator.clipboard.writeText(`${window.location.origin}/profiles/player/${username}/`).then(() => {
+            alert('Profile link copied to clipboard!');
+        });
+    }
+}
+</script>
+
+<style>
+.connection-item {
+    transition: transform 0.2s ease-in-out;
+}
+
+.connection-item:hover {
+    transform: translateY(-2px);
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-tabs .nav-link.active {
+    border-bottom-color: #28a745;
+    background-color: transparent;
+}
+
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+</style>
+{% endblock %}
+

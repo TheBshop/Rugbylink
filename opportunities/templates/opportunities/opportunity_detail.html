@@ -1,0 +1,339 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load lang_tags %}
+
+{% block title %}{{ opportunity.title }} - Rugby Opportunity{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'opportunities:list' %}">Opportunities</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ opportunity.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Opportunity Header -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center mb-2">
+                                <h1 class="h3 mb-0 me-3">{{ opportunity.title }}</h1>
+                                {% if opportunity.is_featured %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-star-fill"></i> Featured
+                                    </span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-building text-muted me-2"></i>
+                                <span class="h5 mb-0">
+                                    {% if opportunity.team.team_profile %}
+                                        <a href="{{ opportunity.team.team_profile.get_absolute_url }}" class="text-decoration-none">
+                                            {{ opportunity.team.team_profile.team_name }}
+                                        </a>
+                                    {% else %}
+                                        {{ opportunity.team.username }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            <!-- Key Details -->
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-geo-alt text-muted me-2"></i>
+                                        <span>{{ opportunity.location }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-person-badge text-muted me-2"></i>
+                                        <span>{{ opportunity.position }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-briefcase text-muted me-2"></i>
+                                        <span>{{ opportunity.get_contract_type_display }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-currency-pound text-muted me-2"></i>
+                                        <span class="fw-bold text-success">{{ opportunity.salary_range }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-clock text-muted me-2"></i>
+                                        <span>Posted {{ opportunity.posted_date|timesince }} ago</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-people text-muted me-2"></i>
+                                        <span>{{ opportunity.applications_count }} application{{ opportunity.applications_count|pluralize }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 text-end">
+                            <!-- Status Badge -->
+                            <div class="mb-3">
+                                {% if opportunity.status == 'ACTIVE' %}
+                                    <span class="badge bg-success fs-6">{{ opportunity.get_status_display }}</span>
+                                {% elif opportunity.status == 'CLOSED' %}
+                                    <span class="badge bg-danger fs-6">{{ opportunity.get_status_display }}</span>
+                                {% else %}
+                                    <span class="badge bg-warning fs-6">{{ opportunity.get_status_display }}</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Application Button -->
+                            {% if user.is_authenticated and user.user_type == 'player' %}
+                                {% if user not in opportunity.applications.all %}
+                                    {% if opportunity.status == 'ACTIVE' %}
+                                        <a href="{% url 'opportunities:apply' pk=opportunity.pk %}" class="btn btn-success btn-lg w-100 mb-2">
+                                            <i class="bi bi-send"></i> Apply Now
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-lg w-100 mb-2" disabled>
+                                            <i class="bi bi-lock"></i> Applications Closed
+                                        </button>
+                                    {% endif %}
+                                {% else %}
+                                    <button class="btn btn-outline-success btn-lg w-100 mb-2" disabled>
+                                        <i class="bi bi-check-circle"></i> Already Applied
+                                    </button>
+                                {% endif %}
+                            {% elif not user.is_authenticated %}
+                                <a href="{% url 'accounts:player_signup' %}" class="btn btn-success btn-lg w-100 mb-2">
+                                    <i class="bi bi-person-plus"></i> Sign Up to Apply
+                                </a>
+                            {% endif %}
+                            
+                            <!-- Share and Save Buttons -->
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-primary" onclick="shareOpportunity()">
+                                    <i class="bi bi-share"></i> Share
+                                </button>
+                                {% if user.is_authenticated %}
+                                    <button class="btn btn-outline-secondary">
+                                        <i class="bi bi-bookmark"></i> Save
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Job Description -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Job Description</h5>
+                    <div class="job-description">
+                        {{ opportunity.description|linebreaks }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requirements -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Requirements</h5>
+                    <div class="requirements">
+                        {{ opportunity.requirements|linebreaks }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Benefits -->
+            {% if opportunity.benefits %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Benefits & Perks</h5>
+                        <div class="benefits">
+                            {{ opportunity.benefits|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Important Dates -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Important Dates</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between">
+                                <span>Posted:</span>
+                                <strong>{{ opportunity.posted_date|date:"F d, Y" }}</strong>
+                            </div>
+                        </div>
+                        {% if opportunity.deadline %}
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between">
+                                    <span>Application Deadline:</span>
+                                    <strong class="text-danger">{{ opportunity.deadline|date:"F d, Y" }}</strong>
+                                </div>
+                            </div>
+                        {% endif %}
+                        {% if opportunity.start_date %}
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between">
+                                    <span>Start Date:</span>
+                                    <strong>{{ opportunity.start_date|date:"F d, Y" }}</strong>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Team Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">About the Team</h6>
+                </div>
+                <div class="card-body">
+                    {% if opportunity.team.team_profile %}
+                        <div class="text-center mb-3">
+                            {% if opportunity.team.team_profile.logo %}
+                                <img src="{{ opportunity.team.team_profile.logo.url }}" 
+                                     class="img-fluid rounded" style="max-height: 80px;" alt="Team Logo">
+                            {% endif %}
+                            <h6 class="mt-2 mb-1">
+                                <a href="{{ opportunity.team.team_profile.get_absolute_url }}" class="text-decoration-none">
+                                    {{ opportunity.team.team_profile.team_name }}
+                                </a>
+                            </h6>
+                            {% if opportunity.team.team_profile.league %}
+                                <p class="text-muted small mb-2">{{ opportunity.team.team_profile.get_league_display }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        {% if opportunity.team.team_profile.description %}
+                            <p class="small text-muted">{{ opportunity.team.team_profile.description|truncatewords:30 }}</p>
+                        {% endif %}
+                        
+                        <div class="d-grid">
+                            <a href="{{ opportunity.team.team_profile.get_absolute_url }}" class="btn btn-outline-primary btn-sm">
+                                View Team Profile
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Team information not available</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Application Stats -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Application Statistics</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="h4 text-primary">{{ opportunity.applications_count }}</div>
+                            <small class="text-muted">Applications</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h4 text-success">{{ opportunity.posted_date|timesince }}</div>
+                            <small class="text-muted">Posted</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Similar Opportunities -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Similar Opportunities</h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-search display-6"></i>
+                        <p class="mt-2 mb-0">No similar opportunities found</p>
+                        <small>Check back later for more opportunities</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Safety Tips -->
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h6 class="mb-0 text-dark">
+                        <i class="bi bi-shield-check"></i> Safety Tips
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0 small">
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            Never pay to apply for a job
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            Research the team before applying
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            Meet in public places for interviews
+                        </li>
+                        <li>
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            Trust your instincts
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function shareOpportunity() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ opportunity.title }}',
+            text: 'Check out this rugby opportunity: {{ opportunity.title }}',
+            url: window.location.href
+        });
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(window.location.href).then(function() {
+            alert('Link copied to clipboard!');
+        });
+    }
+}
+</script>
+
+<style>
+.job-description, .requirements, .benefits {
+    line-height: 1.6;
+}
+
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+}
+</style>
+{% endblock %}
+

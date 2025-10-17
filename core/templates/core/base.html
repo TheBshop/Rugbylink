@@ -1,0 +1,164 @@
+{% load static %}
+{% load lang_tags %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}RugbyLink{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'core:home' %}">
+                <i class="bi bi-rugby"></i> RugbyLink
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                {% if user.is_authenticated %}
+                    <!-- Search Bar -->
+                    <form class="d-flex mx-auto" style="width: 300px;" method="GET" action="{% url 'core:search' %}">
+                        <input class="form-control me-2" type="search" name="q" placeholder="{% get_translation 'Search players, teams...' LANGUAGE_CODE %}" aria-label="Search">
+                        <button class="btn btn-outline-light" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </form>
+                    
+                    <!-- Navigation Links -->
+                    <ul class="navbar-nav ms-auto">
+                        <!-- Language Switcher -->
+                        <li class="nav-item">
+                            {% include 'core/language_switcher.html' %}
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'feed:home' %}">
+                                <i class="bi bi-house"></i> {% get_translation "Home" LANGUAGE_CODE %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'opportunities:list' %}">
+                                <i class="bi bi-briefcase"></i> {% get_translation "Opportunities" LANGUAGE_CODE %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'connections:list' %}">
+                                <i class="bi bi-people"></i> {% get_translation "Network" LANGUAGE_CODE %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link position-relative" href="{% url 'messaging:inbox' %}">
+                                <i class="bi bi-envelope"></i> {% get_translation "Messages" LANGUAGE_CODE %}
+                                {% if unread_messages_count > 0 %}
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        {{ unread_messages_count }}
+                                    </span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        
+                        <!-- User Dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                {% if user.player_profile.profile_picture %}
+                                    <img src="{{ user.player_profile.profile_picture.url }}" class="rounded-circle me-1" width="24" height="24" alt="Profile">
+                                {% elif user.team_profile.logo %}
+                                    <img src="{{ user.team_profile.logo.url }}" class="rounded-circle me-1" width="24" height="24" alt="Logo">
+                                {% elif user.agent_profile.profile_picture %}
+                                    <img src="{{ user.agent_profile.profile_picture.url }}" class="rounded-circle me-1" width="24" height="24" alt="Profile">
+                                {% else %}
+                                    <i class="bi bi-person-circle"></i>
+                                {% endif %}
+                                {{ user.get_full_name|default:user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                {% if user.user_type == 'PLAYER' and user.player_profile %}
+                                    <li><a class="dropdown-item" href="{% url 'profiles:player_detail' user.player_profile.pk %}">My Profile</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'profiles:player_edit' user.player_profile.pk %}">Edit Profile</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'opportunities:my_applications' %}">My Applications</a></li>
+                                {% elif user.user_type == 'TEAM' and user.team_profile %}
+                                    <li><a class="dropdown-item" href="{% url 'profiles:team_detail' user.team_profile.pk %}">Team Profile</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'profiles:team_edit' user.team_profile.pk %}">Edit Team</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'opportunities:create' %}">Post Opportunity</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'opportunities:my_opportunities' %}">My Opportunities</a></li>
+                                {% elif user.user_type == 'AGENT' and user.agent_profile %}
+                                    <li><a class="dropdown-item" href="{% url 'profiles:agent_detail' user.agent_profile.pk %}">My Profile</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'profiles:agent_edit' user.agent_profile.pk %}">Edit Profile</a></li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">Logout</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                {% else %}
+                    <!-- Guest Navigation -->
+                    <ul class="navbar-nav ms-auto">
+                        <!-- Language Switcher -->
+                        <li class="nav-item">
+                            {% include 'core/language_switcher.html' %}
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:login' %}">{% get_translation "Login" LANGUAGE_CODE %}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:signup' %}">{% get_translation "Sign Up" LANGUAGE_CODE %}</a>
+                        </li>
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="container my-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-light text-center text-muted py-4 mt-5">
+        <div class="container">
+            <p>&copy; 2024 RugbyLink. Connecting the Rugby Community.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="#" class="text-muted"><i class="bi bi-facebook"></i></a>
+                <a href="#" class="text-muted"><i class="bi bi-twitter"></i></a>
+                <a href="#" class="text-muted"><i class="bi bi-instagram"></i></a>
+                <a href="#" class="text-muted"><i class="bi bi-linkedin"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{% static 'core/js/main.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

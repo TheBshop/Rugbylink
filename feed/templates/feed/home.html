@@ -1,0 +1,86 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Feed - RugbyLink{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Welcome to RugbyLink!</h5>
+                <p class="card-text">Your social feed is coming soon. Connect with the rugby community, share updates, and discover opportunities.</p>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'opportunities:list' %}" class="btn btn-success">
+                        <i class="bi bi-briefcase me-1"></i>Browse Opportunities
+                    </a>
+                    <a href="{% url 'connections:list' %}" class="btn btn-outline-success">
+                        <i class="bi bi-people me-1"></i>Build Network
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Placeholder for future posts -->
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-newspaper display-1 text-muted"></i>
+                <h4 class="mt-3 text-muted">No posts yet</h4>
+                <p class="text-muted">Be the first to share something with the rugby community!</p>
+                <button class="btn btn-success" disabled>
+                    <i class="bi bi-plus-circle me-1"></i>Create Post (Coming Soon)
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if user.user_type == 'PLAYER' %}
+                        <a href="{% url 'profiles:player_detail' user.player_profile.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-person me-1"></i>View My Profile
+                        </a>
+                        <a href="{% url 'opportunities:my_applications' %}" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-file-earmark-text me-1"></i>My Applications
+                        </a>
+                    {% elif user.user_type == 'TEAM' %}
+                        <a href="{% url 'profiles:team_detail' user.team_profile.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-people me-1"></i>View Team Profile
+                        </a>
+                        <a href="{% url 'opportunities:create' %}" class="btn btn-outline-warning btn-sm">
+                            <i class="bi bi-plus-circle me-1"></i>Post Opportunity
+                        </a>
+                        <a href="{% url 'opportunities:my_opportunities' %}" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-list-check me-1"></i>Manage Opportunities
+                        </a>
+                    {% elif user.user_type == 'AGENT' %}
+                        <a href="{% url 'profiles:agent_detail' user.agent_profile.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-briefcase me-1"></i>View My Profile
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'core:search' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-search me-1"></i>Search Users
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0">Recent Activity</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-clock-history display-6"></i>
+                    <p class="mt-2 mb-0">No recent activity</p>
+                    <small>Activity feed coming soon!</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

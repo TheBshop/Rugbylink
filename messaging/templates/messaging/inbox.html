@@ -1,0 +1,454 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load lang_tags %}
+
+{% block title %}Messages{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Sidebar - Conversations List -->
+        <div class="col-lg-4 col-md-5">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-envelope"></i> Messages
+                        </h5>
+                        <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#composeModal">
+                            <i class="bi bi-pencil-square"></i> New
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body p-0">
+                    <!-- Search -->
+                    <div class="p-3 border-bottom">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Search conversations..." id="conversationSearch">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Conversations List -->
+                    <div class="conversations-list" style="max-height: 600px; overflow-y: auto;">
+                        {% for conversation in conversations %}
+                            <div class="conversation-item p-3 border-bottom {% if conversation.id == active_conversation.id %}bg-light{% endif %}" 
+                                 onclick="loadConversation({{ conversation.id }})" style="cursor: pointer;">
+                                <div class="d-flex align-items-center">
+                                    <!-- Profile Picture -->
+                                    <div class="flex-shrink-0 me-3">
+                                        {% with other_user=conversation.get_other_participant:user %}
+                                            {% if other_user.user_type == 'player' and other_user.player_profile.profile_picture %}
+                                                <img src="{{ other_user.player_profile.profile_picture.url }}" 
+                                                     class="img-fluid rounded-circle" style="width: 50px; height: 50px; object-fit: cover;" alt="Profile">
+                                            {% elif other_user.user_type == 'team' and other_user.team_profile.logo %}
+                                                <img src="{{ other_user.team_profile.logo.url }}" 
+                                                     class="img-fluid rounded-circle" style="width: 50px; height: 50px; object-fit: cover;" alt="Logo">
+                                            {% elif other_user.user_type == 'agent' and other_user.agent_profile.profile_picture %}
+                                                <img src="{{ other_user.agent_profile.profile_picture.url }}" 
+                                                     class="img-fluid rounded-circle" style="width: 50px; height: 50px; object-fit: cover;" alt="Profile">
+                                            {% else %}
+                                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                    <i class="bi bi-person text-white"></i>
+                                                </div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                    
+                                    <!-- Conversation Info -->
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                {% with other_user=conversation.get_other_participant:user %}
+                                                    <h6 class="mb-1">
+                                                        {{ other_user.get_full_name|default:other_user.username }}
+                                                    </h6>
+                                                    <small class="text-muted">
+                                                        {% if other_user.user_type == 'player' and other_user.player_profile.position %}
+                                                            {{ other_user.player_profile.get_position_display }}
+                                                        {% elif other_user.user_type == 'team' and other_user.team_profile.team_name %}
+                                                            {{ other_user.team_profile.team_name }}
+                                                        {% elif other_user.user_type == 'agent' and other_user.agent_profile.agency_name %}
+                                                            {{ other_user.agent_profile.agency_name }}
+                                                        {% else %}
+                                                            {{ other_user.get_user_type_display }}
+                                                        {% endif %}
+                                                    </small>
+                                                {% endwith %}
+                                            </div>
+                                            <div class="text-end">
+                                                <small class="text-muted">{{ conversation.updated_at|timesince }} ago</small>
+                                                {% if conversation.get_unread_count:user > 0 %}
+                                                    <span class="badge bg-danger ms-1">{{ conversation.get_unread_count:user }}</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Last Message Preview -->
+                                        {% with last_message=conversation.get_last_message %}
+                                            {% if last_message %}
+                                                <p class="mb-0 text-muted small mt-1">
+                                                    {% if last_message.sender == user %}
+                                                        <strong>You:</strong> 
+                                                    {% endif %}
+                                                    {{ last_message.content|truncatechars:50 }}
+                                                </p>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-inbox display-1 text-muted"></i>
+                                <h5 class="mt-3">No Messages Yet</h5>
+                                <p class="text-muted">Start a conversation with someone in your network.</p>
+                                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#composeModal">
+                                    <i class="bi bi-pencil-square"></i> Send Message
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Chat Area -->
+        <div class="col-lg-8 col-md-7">
+            {% if active_conversation %}
+                <div class="card h-100">
+                    <!-- Chat Header -->
+                    <div class="card-header bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                {% with other_user=active_conversation.get_other_participant:user %}
+                                    <!-- Profile Picture -->
+                                    <div class="me-3">
+                                        {% if other_user.user_type == 'player' and other_user.player_profile.profile_picture %}
+                                            <img src="{{ other_user.player_profile.profile_picture.url }}" 
+                                                 class="img-fluid rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" alt="Profile">
+                                        {% elif other_user.user_type == 'team' and other_user.team_profile.logo %}
+                                            <img src="{{ other_user.team_profile.logo.url }}" 
+                                                 class="img-fluid rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" alt="Logo">
+                                        {% elif other_user.user_type == 'agent' and other_user.agent_profile.profile_picture %}
+                                            <img src="{{ other_user.agent_profile.profile_picture.url }}" 
+                                                 class="img-fluid rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" alt="Profile">
+                                        {% else %}
+                                            <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person text-white"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- User Info -->
+                                    <div>
+                                        <h6 class="mb-0">
+                                            {{ other_user.get_full_name|default:other_user.username }}
+                                        </h6>
+                                        <small class="text-muted">
+                                            {% if other_user.user_type == 'player' and other_user.player_profile.position %}
+                                                {{ other_user.player_profile.get_position_display }}
+                                            {% elif other_user.user_type == 'team' and other_user.team_profile.team_name %}
+                                                {{ other_user.team_profile.team_name }}
+                                            {% elif other_user.user_type == 'agent' and other_user.agent_profile.agency_name %}
+                                                {{ other_user.agent_profile.agency_name }}
+                                            {% else %}
+                                                {{ other_user.get_user_type_display }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                {% endwith %}
+                            </div>
+                            
+                            <!-- Chat Actions -->
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="showUserProfile()">
+                                    <i class="bi bi-person"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="showChatInfo()">
+                                    <i class="bi bi-info-circle"></i>
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="archiveConversation()">
+                                    <i class="bi bi-archive"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Messages Area -->
+                    <div class="card-body p-0">
+                        <div id="messagesContainer" class="messages-container" style="height: 400px; overflow-y: auto; padding: 20px;">
+                            {% for message in active_conversation.messages.all %}
+                                <div class="message-item mb-3 {% if message.sender == user %}text-end{% else %}text-start{% endif %}">
+                                    <div class="d-flex {% if message.sender == user %}justify-content-end{% else %}justify-content-start{% endif %}">
+                                        {% if message.sender != user %}
+                                            <!-- Sender's Profile Picture -->
+                                            <div class="flex-shrink-0 me-2">
+                                                {% if message.sender.user_type == 'player' and message.sender.player_profile.profile_picture %}
+                                                    <img src="{{ message.sender.player_profile.profile_picture.url }}" 
+                                                         class="img-fluid rounded-circle" style="width: 35px; height: 35px; object-fit: cover;" alt="Profile">
+                                                {% elif message.sender.user_type == 'team' and message.sender.team_profile.logo %}
+                                                    <img src="{{ message.sender.team_profile.logo.url }}" 
+                                                         class="img-fluid rounded-circle" style="width: 35px; height: 35px; object-fit: cover;" alt="Logo">
+                                                {% else %}
+                                                    <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                                        <i class="bi bi-person text-white" style="font-size: 0.8rem;"></i>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <!-- Message Content -->
+                                        <div class="message-bubble {% if message.sender == user %}bg-success text-white{% else %}bg-light{% endif %}" 
+                                             style="max-width: 70%; padding: 10px 15px; border-radius: 18px;">
+                                            <p class="mb-1">{{ message.content }}</p>
+                                            
+                                            <!-- Message Meta -->
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="{% if message.sender == user %}text-white-50{% else %}text-muted{% endif %}">
+                                                    {{ message.timestamp|date:"g:i A" }}
+                                                </small>
+                                                
+                                                <!-- Message Actions -->
+                                                <div class="message-actions">
+                                                    <button class="btn btn-link btn-sm p-0 ms-2" onclick="reactToMessage({{ message.id }}, 'like')">
+                                                        <i class="bi bi-hand-thumbs-up"></i>
+                                                    </button>
+                                                    <button class="btn btn-link btn-sm p-0 ms-1" onclick="replyToMessage({{ message.id }})">
+                                                        <i class="bi bi-reply"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Message Reactions -->
+                                            {% if message.reactions.exists %}
+                                                <div class="mt-2">
+                                                    {% for reaction in message.reactions.all %}
+                                                        <span class="badge bg-secondary me-1">{{ reaction.get_reaction_type_display }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        {% if message.sender == user %}
+                                            <!-- Your Profile Picture -->
+                                            <div class="flex-shrink-0 ms-2">
+                                                {% if user.user_type == 'player' and user.player_profile.profile_picture %}
+                                                    <img src="{{ user.player_profile.profile_picture.url }}" 
+                                                         class="img-fluid rounded-circle" style="width: 35px; height: 35px; object-fit: cover;" alt="Profile">
+                                                {% elif user.user_type == 'team' and user.team_profile.logo %}
+                                                    <img src="{{ user.team_profile.logo.url }}" 
+                                                         class="img-fluid rounded-circle" style="width: 35px; height: 35px; object-fit: cover;" alt="Logo">
+                                                {% else %}
+                                                    <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                                        <i class="bi bi-person text-white" style="font-size: 0.8rem;"></i>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <div class="text-center py-5">
+                                    <i class="bi bi-chat display-1 text-muted"></i>
+                                    <h5 class="mt-3">Start the Conversation</h5>
+                                    <p class="text-muted">Send a message to begin your conversation.</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Message Input -->
+                    <div class="card-footer">
+                        <form id="messageForm" method="post" action="{% url 'messaging:send_message' active_conversation.id %}">
+                            {% csrf_token %}
+                            <div class="input-group">
+                                <button class="btn btn-outline-secondary" type="button" onclick="attachFile()">
+                                    <i class="bi bi-paperclip"></i>
+                                </button>
+                                <input type="text" class="form-control" name="content" placeholder="Type a message..." id="messageInput" required>
+                                <button class="btn btn-success" type="submit">
+                                    <i class="bi bi-send"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card h-100">
+                    <div class="card-body d-flex align-items-center justify-content-center">
+                        <div class="text-center">
+                            <i class="bi bi-chat display-1 text-muted"></i>
+                            <h3 class="mt-3">Welcome to Messages</h3>
+                            <p class="text-muted">Select a conversation from the sidebar to start messaging.</p>
+                            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#composeModal">
+                                <i class="bi bi-pencil-square"></i> Start New Conversation
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Compose Message Modal -->
+<div class="modal fade" id="composeModal" tabindex="-1" aria-labelledby="composeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="composeModalLabel">New Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'messaging:compose' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="recipient" class="form-label">To</label>
+                        <input type="text" class="form-control" id="recipient" name="recipient" 
+                               placeholder="Search for a user..." required>
+                        <div class="form-text">Start typing to search for users in your network.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject (Optional)</label>
+                        <input type="text" class="form-control" id="subject" name="subject" 
+                               placeholder="Message subject...">
+                    </div>
+                    <div class="mb-3">
+                        <label for="messageContent" class="form-label">Message</label>
+                        <textarea class="form-control" id="messageContent" name="content" rows="4" 
+                                  placeholder="Type your message..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Send Message</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-scroll to bottom of messages
+function scrollToBottom() {
+    const container = document.getElementById('messagesContainer');
+    container.scrollTop = container.scrollHeight;
+}
+
+// Load conversation
+function loadConversation(conversationId) {
+    window.location.href = `/messaging/inbox/${conversationId}/`;
+}
+
+// React to message
+function reactToMessage(messageId, reactionType) {
+    fetch(`/messaging/react/${messageId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            reaction_type: reactionType
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Refresh to show reaction
+        }
+    });
+}
+
+// Reply to message
+function replyToMessage(messageId) {
+    // Implementation for threaded replies
+    console.log('Reply to message:', messageId);
+}
+
+// Show user profile
+function showUserProfile() {
+    // Implementation to show user profile modal
+    console.log('Show user profile');
+}
+
+// Show chat info
+function showChatInfo() {
+    // Implementation to show chat information
+    console.log('Show chat info');
+}
+
+// Archive conversation
+function archiveConversation() {
+    if (confirm('Are you sure you want to archive this conversation?')) {
+        // Implementation to archive conversation
+        console.log('Archive conversation');
+    }
+}
+
+// Attach file
+function attachFile() {
+    // Implementation for file attachment
+    console.log('Attach file');
+}
+
+// Auto-scroll when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    scrollToBottom();
+});
+
+// Auto-refresh messages every 30 seconds
+setInterval(function() {
+    if (document.getElementById('messagesContainer')) {
+        // Implementation for auto-refresh
+        console.log('Auto-refresh messages');
+    }
+}, 30000);
+</script>
+
+<style>
+.conversation-item:hover {
+    background-color: #f8f9fa !important;
+}
+
+.message-bubble {
+    word-wrap: break-word;
+}
+
+.messages-container {
+    background-color: #f8f9fa;
+}
+
+.message-actions {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.message-item:hover .message-actions {
+    opacity: 1;
+}
+
+/* Custom scrollbar */
+.messages-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.messages-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+</style>
+{% endblock %}
+

@@ -1,0 +1,99 @@
+{% extends 'core/base.html' %}
+{% load i18n %}
+
+{% block title %}Language Debug - RugbyLink{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">🌍 Language Debug Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Current Settings:</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <strong>Current Language:</strong> {{ current_language }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Session Language:</strong> {{ session_language|default:"Not set" }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Cookie Language:</strong> {{ cookie_language|default:"Not set" }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Request Language:</strong> {{ request_language }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Browser Language:</strong> {{ browser_language }}
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Available Languages:</h5>
+                            <ul class="list-group list-group-flush">
+                                {% for code, name in available_languages %}
+                                    <li class="list-group-item">
+                                        <strong>{{ code }}:</strong> {{ name }}
+                                        {% if code == current_language %}
+                                            <span class="badge bg-success ms-2">Current</span>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <h5>Test Language Switching:</h5>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <form method="post" action="{% url 'core:set_language' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="language" value="en">
+                                    <button type="submit" class="btn btn-primary btn-sm">🇺🇸 English</button>
+                                </form>
+                                <form method="post" action="{% url 'core:set_language' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="language" value="es">
+                                    <button type="submit" class="btn btn-success btn-sm">🇪🇸 Español</button>
+                                </form>
+                                <form method="post" action="{% url 'core:set_language' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="language" value="fr">
+                                    <button type="submit" class="btn btn-info btn-sm">🇫🇷 Français</button>
+                                </form>
+                                <form method="post" action="{% url 'core:set_language' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="language" value="it">
+                                    <button type="submit" class="btn btn-warning btn-sm">🇮🇹 Italiano</button>
+                                </form>
+                                <form method="post" action="{% url 'core:set_language' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="language" value="pt">
+                                    <button type="submit" class="btn btn-danger btn-sm">🇵🇹 Português</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="text-center">
+                        <a href="{% url 'core:home' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-house me-1"></i>Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

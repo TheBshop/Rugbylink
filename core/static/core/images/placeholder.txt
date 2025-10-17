@@ -1,0 +1,7 @@
+This is a placeholder for images.
+In a real deployment, you would add:
+- rugby-hero.jpg (hero section image)
+- Default profile pictures
+- Team logos
+- Other UI images
+
