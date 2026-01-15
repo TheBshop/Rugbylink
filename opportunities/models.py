@@ -110,3 +110,73 @@ class Application(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.opportunity.update_applications_count()
+
+
+class ExternalOpportunity(models.Model):
+    class SportChoices(models.TextChoices):
+        ARCHERY = "ARCHERY", "Archery"
+        ATHLETICS = "ATHLETICS", "Athletics"
+        BADMINTON = "BADMINTON", "Badminton"
+        BASEBALL = "BASEBALL", "Baseball"
+        BASKETBALL = "BASKETBALL", "Basketball"
+        BOXING = "BOXING", "Boxing"
+        CANOEING = "CANOEING", "Canoeing"
+        CYCLING = "CYCLING", "Cycling"
+        FENCING = "FENCING", "Fencing"
+        FIGURE_SKATING = "FIGURE_SKATING", "Figure Skating"
+        FOOTBALL = "FOOTBALL", "Football"
+        GOLF = "GOLF", "Golf"
+        GYMNASTICS = "GYMNASTICS", "Gymnastics"
+        HANDBALL = "HANDBALL", "Handball"
+        HOCKEY = "HOCKEY", "Hockey"
+        JUDO = "JUDO", "Judo"
+        KARATE = "KARATE", "Karate"
+        ROWING = "ROWING", "Rowing"
+        RUGBY = "RUGBY", "Rugby"
+        SAILING = "SAILING", "Sailing"
+        SKATING = "SKATING", "Skating"
+        SKIING = "SKIING", "Skiing"
+        SOFTBALL = "SOFTBALL", "Softball"
+        SURFING = "SURFING", "Surfing"
+        SWIMMING = "SWIMMING", "Swimming"
+        SYNCHRONIZED_SWIMMING = "SYNCHRONIZED_SWIMMING", "Synchronized Swimming"
+        TABLE_TENNIS = "TABLE_TENNIS", "Table Tennis"
+        TAEKWONDO = "TAEKWONDO", "Taekwondo"
+        TENNIS = "TENNIS", "Tennis"
+        TRIATHLON = "TRIATHLON", "Triathlon"
+        VOLLEYBALL = "VOLLEYBALL", "Volleyball"
+        WEIGHTLIFTING = "WEIGHTLIFTING", "Weightlifting"
+
+    class LevelChoices(models.TextChoices):
+        PROFESSIONAL = "PROFESSIONAL", "Professional"
+        SEMI_PRO = "SEMI_PRO", "Semi-Pro"
+        SCOUTING = "SCOUTING", "Scouting"
+        COLLEGE = "COLLEGE", "College"
+        UNIVERSITY_SCHOLARSHIP = "UNIVERSITY_SCHOLARSHIP", "University Scholarship"
+        YOUTH_CAMP = "YOUTH_CAMP", "Youth Camp"
+        TRYOUT = "TRYOUT", "Tryout"
+        PART_TIME = "PART_TIME", "Part Time"
+
+    class GenderChoices(models.TextChoices):
+        MEN = "MEN", "Men"
+        WOMEN = "WOMEN", "Women"
+        COED = "COED", "Coed"
+
+    title = models.CharField(max_length=255)
+    sport = models.CharField(max_length=40, choices=SportChoices.choices)
+    level = models.CharField(max_length=40, choices=LevelChoices.choices)
+    gender = models.CharField(max_length=10, choices=GenderChoices.choices)
+    country = models.CharField(max_length=100)
+    deadline = models.DateField(blank=True, null=True)
+    link = models.URLField(max_length=500)
+    source = models.CharField(max_length=200, blank=True)
+    is_active = models.BooleanField(default=True)
+    scraped_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["sport", "level", "gender", "country", "deadline", "title"]
+        verbose_name = "External Opportunity"
+        verbose_name_plural = "External Opportunities"
+
+    def __str__(self):
+        return f"{self.title} ({self.get_sport_display()})"
